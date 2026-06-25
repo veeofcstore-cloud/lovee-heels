@@ -354,3 +354,79 @@ Mohon konfirmasi rekening / info ongkir selanjutnya ya. Terima kasih! 🙏`;
   });
   obs.observe(heroEl, { childList: true });
 })();
+
+/* ══════════════════════════════════
+   VIDEO PLAYER
+══════════════════════════════════ */
+function playVideo() {
+  const vid     = document.getElementById('promoVideo');
+  const overlay = document.getElementById('videoOverlay');
+  if (!vid) return;
+
+  if (vid.paused) {
+    vid.muted = false;  // unmute on explicit play
+    vid.play().catch(() => {
+      vid.muted = true;
+      vid.play();       // fallback: play muted if autoplay blocked
+    });
+    overlay.classList.add('hidden');
+    // Pixel: video viewed = high-intent signal
+    px('ViewContent', {
+      content_name: 'LOVEE JENI Heels — Video',
+      content_type: 'product',
+    });
+  } else {
+    vid.pause();
+    overlay.classList.remove('hidden');
+  }
+}
+
+// Autoplay muted when video enters viewport (silent background loop)
+(function () {
+  const vid = document.getElementById('promoVideo');
+  if (!vid) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        vid.muted = true;
+        vid.play().catch(() => {});
+      } else {
+        vid.pause();
+      }
+    });
+  }, { threshold: 0.4 });
+  obs.observe(vid);
+})();
+
+/* ══════════════════════════════════
+   STICKY MOBILE CTA
+══════════════════════════════════ */
+(function () {
+  const cta  = document.getElementById('stickyCta');
+  const hero = document.getElementById('top');
+  if (!cta || !hero) return;
+
+  // Only on mobile
+  if (window.matchMedia('(min-width:901px)').matches) return;
+
+  document.body.classList.add('has-sticky');
+
+  const obs = new IntersectionObserver(entries => {
+    const heroGone = !entries[0].isIntersecting;
+    cta.classList.toggle('visible', heroGone);
+    cta.setAttribute('aria-hidden', heroGone ? 'false' : 'true');
+  }, { threshold: 0.1 });
+
+  obs.observe(hero);
+
+  // Hide when user reaches order form (they don't need the CTA anymore)
+  const orderSection = document.getElementById('order');
+  if (orderSection) {
+    const obsOrder = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        cta.classList.remove('visible');
+      }
+    }, { threshold: 0.2 });
+    obsOrder.observe(orderSection);
+  }
+})();
